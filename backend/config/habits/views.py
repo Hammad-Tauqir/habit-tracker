@@ -85,3 +85,68 @@ class CompleteHabitView(APIView):
             "current_streak": habit.current_streak,
             "longest_streak":habit.longest_streak
         })            
+    
+class DashBoardView(APIView):
+    permission_classes=[permissions.IsAuthenticated]
+
+    def get(self,request):
+        user=request.user
+        today=now().date()
+
+        total_habits=Habit.objects.filter(user=user).count()
+
+        completed_today=HabitCompletion.objects.filter(
+            habit_user=user,
+            completed_today=today
+
+        ).count()
+
+        active_streaks=Habit.objects.filter(
+            user=user,
+            current_streak__gt=0
+        ).count()
+
+        longest_streak = Habit.objects.filter(
+            user=user
+        ).order_by('-longest_streak').first()
+
+        return Response({
+            "total_habits": total_habits,
+            "completed_today": completed_today,
+            "active_streaks": active_streaks,
+            "longest_streak": longest_streak.longest_streak if longest_streak else 0
+        })
+    
+
+class WeeklyProgressView(APIView):
+    permission_classes=[permissions.IsAuthenticated]
+    def get(self,request,pk):
+        user=request.user
+
+        try:
+            habit=Habit.objects.get(id=pk,user=user)
+        except Habit.DoesNotExist:
+            return Response({"error":"Habit Not Found"}, status=404)
+
+        today=now().date()
+
+        start_of_week=today-timedelta(days=today.weekday())
+
+        week_date=[]
+
+        for i in range(7):
+            day=start_of_week+timedelta(days=i)
+            completed=HabitCompletion.objects.filter(
+                habit=habit,
+                completed_at=day
+
+            ).exists()
+            
+            week_date.append({
+                "day":day,
+                "completed":completed
+            })
+        return Response({
+            "habit":habit.name,
+            "week":week_date
+        })
