@@ -6,19 +6,56 @@ from django.utils.timezone import now
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from datetime import timedelta
+from .pagination import HabitPagination
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 
+from rest_framework import generics, permissions
+from django_filters.rest_framework import DjangoFilterBackend
+from rest_framework.filters import SearchFilter, OrderingFilter
 
 class HabitListCreateView(generics.ListCreateAPIView):
-    serializer_class=HabitSerializer
-    permission_classes=[permissions.IsAuthenticated]
+    serializer_class = HabitSerializer
+    permission_classes = [permissions.IsAuthenticated]
+    pagination_class = HabitPagination
+
+    # Search, Filter, Ordering
+    filter_backends = [
+        DjangoFilterBackend,
+        SearchFilter,
+        OrderingFilter
+    ]
+
+    # Filtering fields
+    filterset_fields = [
+        'is_completed',
+        'current_streak',
+        'longest_streak'
+    ]
+
+    # Search fields
+    search_fields = [
+        'name',
+        'description'
+    ]
+
+    # Ordering fields
+    ordering_fields = [
+        'created_at',
+        'name',
+        'current_streak',
+        'longest_streak'
+    ]
+
+    # Default ordering
+    ordering = ['-created_at']
 
     def get_queryset(self):
         return Habit.objects.filter(user=self.request.user)
-    
-    def perform_create(self,serializer):
-        serializer.save(user=self.request.user)
 
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
 
 
 class HabitDetailView(generics.RetrieveUpdateDestroyAPIView):

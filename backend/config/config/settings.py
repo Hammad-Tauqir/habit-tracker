@@ -47,6 +47,8 @@ INSTALLED_APPS = [
     "users",
     "habits",
     'corsheaders',
+    'rest_framework_simplejwt.token_blacklist',
+    'django_filters',
 ]
 
 MIDDLEWARE = [
@@ -141,6 +143,11 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+      'DEFAULT_FILTER_BACKENDS': [
+        'django_filters.rest_framework.DjangoFilterBackend',
+        'rest_framework.filters.SearchFilter',
+        'rest_framework.filters.OrderingFilter',
+    ],
 }
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5173",
